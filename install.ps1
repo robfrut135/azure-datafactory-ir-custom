@@ -14,7 +14,7 @@ if (! (Test-Path($logLoc)))
     New-Item -path $logLoc -type directory -Force
 }
 $logPath = "$logLoc\tracelog.log"
-"Start to excute gatewayInstall.ps1. `n" | Out-File $logPath
+
 
 function Now-Value()
 {
@@ -32,7 +32,6 @@ function Throw-Error([string] $msg)
 		$stack = $_.ScriptStackTrace
 		Trace-Log "DMDTTP is failed: $msg`nStack:`n$stack"
 	}
-
 	throw $msg
 }
 
@@ -47,7 +46,6 @@ function Trace-Log([string] $msg)
     {
         #ignore any exception during trace
     }
-
 }
 
 function Run-Process([string] $process, [string] $arguments)
@@ -108,21 +106,36 @@ function Download-File([string] $url, [string] $path)
     }
 }
 
-function Install-Gateway([string] $gwPath)
+function Install-MSI([string] $msiPath)
 {
-	if ([string]::IsNullOrEmpty($gwPath))
+	if ([string]::IsNullOrEmpty($msiPath))
     {
-		Throw-Error "Integration Runtime Agent path is not specified"
+		Throw-Error "MSI path is not specified"
     }
-	if (!(Test-Path -Path $gwPath))
+	if (!(Test-Path -Path $msiPath))
 	{
-		Throw-Error "Invalid Integration Runtime Agent path: $gwPath"
+		Throw-Error "Invalid MSI path: $msiPath"
 	}
-
 	Trace-Log "Start Integration Runtime Agent installation"
-	Run-Process "msiexec.exe" "/i $gwPath INSTALLTYPE=AzureTemplate /quiet /norestart"
+	Run-Process "msiexec.exe" "/i $msiPath INSTALLTYPE=AzureTemplate /quiet /norestart"
 	Start-Sleep -Seconds 30
-	Trace-Log "Installation of Integration Runtime Agent is successful"
+	Trace-Log "Installation of $msiPath is successful"
+}
+
+function Install-EXE([string] $exePath, [string] $exeArgs)
+{
+	if ([string]::IsNullOrEmpty($exePath))
+    {
+		Throw-Error "EXE path is not specified"
+    }
+	if (!(Test-Path -Path $exePath))
+	{
+		Throw-Error "Invalid EXE path: $exePath"
+	}
+	Trace-Log "Start $exePath installation"
+	Run-Process $exePath $exeArgs
+	Start-Sleep -Seconds 30
+	Trace-Log "Installation of $exePath is successful"
 }
 
 function Register-Gateway([string] $instanceKey)
@@ -167,23 +180,7 @@ function Install-JRE([string] $jrePath, [string] $jreName)
 	Trace-Log "Installation of JRE is successful"
 }
 
-function Install-EXE([string] $exePath, [string] $exeArgs)
-{
-	if ([string]::IsNullOrEmpty($exePath))
-    {
-		Throw-Error "EXE path is not specified"
-    }
-	if (!(Test-Path -Path $gwPath))
-	{
-		Throw-Error "EXE path: $exePath"
-	}
-
-	Trace-Log "Start $exePath installation"
-	Run-Process $exePath $exeArgs
-	Start-Sleep -Seconds 30
-	Trace-Log "Installation of $exePath is successful"
-}
-
+Trace-Log "START install.ps1"
 Trace-Log "Log file: $logLoc"
 
 Trace-Log "Data Factory Integration Runtime Agent"
@@ -192,7 +189,7 @@ Trace-Log "Gateway download fw link: $irUri"
 $gwPath= "$PWD\gateway.msi"
 Trace-Log "Gateway download location: $gwPath"
 Download-File $irUri $gwPath
-Install-Gateway $gwPath
+Install-MSI $gwPath
 Register-Gateway $gatewayKey
 
 Trace-Log "Java Runtime Environment"
@@ -207,8 +204,10 @@ $vcUri = "https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-
 Trace-Log "Package from: $vcUri"
 $vcPath= "$PWD\vcredist_x64.exe"
 Trace-Log "Package location: $vcPath"
-Download-File $jreURI $jrePath
-Install-EXE "vcredist_x64.exe" "-q"
+Download-File $vcUri $vcPath
+Install-EXE $vcPath "-q"
 
 Trace-Log "SAP HANA ODBC Driver"
 Trace-Log "TODO"
+
+Trace-Log "END install.ps1"
