@@ -112,28 +112,28 @@ function Install-Gateway([string] $gwPath)
 {
 	if ([string]::IsNullOrEmpty($gwPath))
     {
-		Throw-Error "Gateway path is not specified"
+		Throw-Error "Integration Runtime Agent path is not specified"
     }
 	if (!(Test-Path -Path $gwPath))
 	{
-		Throw-Error "Invalid gateway path: $gwPath"
+		Throw-Error "Invalid Integration Runtime Agent path: $gwPath"
 	}
 
-	Trace-Log "Start Gateway installation"
+	Trace-Log "Start Integration Runtime Agent installation"
 	Run-Process "msiexec.exe" "/i gateway.msi INSTALLTYPE=AzureTemplate /quiet /norestart"
 	Start-Sleep -Seconds 30
-	Trace-Log "Installation of gateway is successful"
+	Trace-Log "Installation of Integration Runtime Agent is successful"
 }
 
 function Register-Gateway([string] $instanceKey)
 {
-    Trace-Log "Register Agent"
+    Trace-Log "Register Integration Runtime Agent"
 	$currentDate =  Get-Date -Format "yyMMddHHmmss"
 	$filePath = "C:\Program Files\Microsoft Integration Runtime\4.0\Shared\dmgcmd.exe"
     Run-Process $filePath "-Restart"
     Run-Process $filePath "-EnableRemoteAccess 8060"
 	Run-Process $filePath "-RegisterNewNode $instanceKey hip$currentDate"
-    Trace-Log "Agent registration is successful!"
+    Trace-Log "Integration Runtime Agent registration is successful!"
 }
 
 function Install-JRE([string] $jrePath, [string] $jreName)
