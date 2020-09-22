@@ -170,11 +170,11 @@ function Install-JRE([string] $jrePath, [string] $jreName)
 Trace-Log "Log file: $logLoc"
 
 Trace-Log "Data Factory Integration Runtime Agent"
-$uri = "https://go.microsoft.com/fwlink/?linkid=839822"
-Trace-Log "Gateway download fw link: $uri"
+$irUri = "https://go.microsoft.com/fwlink/?linkid=839822"
+Trace-Log "Gateway download fw link: $irUri"
 $gwPath= "$PWD\gateway.msi"
 Trace-Log "Gateway download location: $gwPath"
-Download-File $uri $gwPath
+Download-File $irUri $gwPath
 Install-Gateway $gwPath
 Register-Gateway $gatewayKey
 
@@ -184,6 +184,13 @@ $jrePath= "$PWD\jre.zip"
 Trace-Log "JRE location: $jrePath"
 Download-File $jreURI $jrePath
 Install-JRE $jrePath $jreName
+
+Trace-Log "Visual C++ 2010 Redistributable"
+$vcUri = "https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-3DE650EFEBA5/vcredist_x64.exe"
+Trace-Log "Package from: $vcUri"
+$vcPath= "$PWD\vcredist_x64.exe"
+Trace-Log "Package location: $vcPath"
+.\vcredist_x64.exe -q
 
 Trace-Log "SAP HANA ODBC Driver"
 Trace-Log "TODO"
