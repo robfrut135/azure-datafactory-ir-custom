@@ -1,6 +1,10 @@
 param(
- [string]
- $gatewayKey
+	[string]
+ 	$gatewayKey,
+    [string]
+    $jreURI,
+    [string]
+    $jreName
 )
 
 # init log setting
