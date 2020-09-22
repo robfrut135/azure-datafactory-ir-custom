@@ -120,7 +120,7 @@ function Install-Gateway([string] $gwPath)
 	}
 
 	Trace-Log "Start Integration Runtime Agent installation"
-	Run-Process "msiexec.exe" "/i gateway.msi INSTALLTYPE=AzureTemplate /quiet /norestart"
+	Run-Process "msiexec.exe" "/i $gwPath INSTALLTYPE=AzureTemplate /quiet /norestart"
 	Start-Sleep -Seconds 30
 	Trace-Log "Installation of Integration Runtime Agent is successful"
 }
@@ -167,6 +167,23 @@ function Install-JRE([string] $jrePath, [string] $jreName)
 	Trace-Log "Installation of JRE is successful"
 }
 
+function Install-EXE([string] $exePath, [string] $exeArgs)
+{
+	if ([string]::IsNullOrEmpty($exePath))
+    {
+		Throw-Error "EXE path is not specified"
+    }
+	if (!(Test-Path -Path $gwPath))
+	{
+		Throw-Error "EXE path: $exePath"
+	}
+
+	Trace-Log "Start $exePath installation"
+	Run-Process $exePath $exeArgs
+	Start-Sleep -Seconds 30
+	Trace-Log "Installation of $exePath is successful"
+}
+
 Trace-Log "Log file: $logLoc"
 
 Trace-Log "Data Factory Integration Runtime Agent"
@@ -190,7 +207,8 @@ $vcUri = "https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-
 Trace-Log "Package from: $vcUri"
 $vcPath= "$PWD\vcredist_x64.exe"
 Trace-Log "Package location: $vcPath"
-.\vcredist_x64.exe -q
+Download-File $jreURI $jrePath
+Install-EXE "vcredist_x64.exe" "-q"
 
 Trace-Log "SAP HANA ODBC Driver"
 Trace-Log "TODO"
