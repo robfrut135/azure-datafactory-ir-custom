@@ -1,10 +1,6 @@
 param(
 	[string]
- 	$gatewayKey,
-    [string]
-    $jreURI,
-    [string]
-    $jreName
+ 	$gatewayKey
 )
 
 # init log setting
@@ -146,37 +142,32 @@ function Register-Gateway([string] $instanceKey)
     Run-Process $filePath "-Restart"
     Run-Process $filePath "-EnableRemoteAccess 8060"
 	Run-Process $filePath "-RegisterNewNode $instanceKey hip$currentDate"
+	Start-Sleep -Seconds 30
     Trace-Log "Integration Runtime Agent registration is successful!"
 }
 
-function Install-JRE([string] $jrePath, [string] $jreName)
+function Install-JRE([string] $jreName)
 {
-	if ([string]::IsNullOrEmpty($jrePath) -Or [string]::IsNullOrEmpty($jreName))
+	if ([string]::IsNullOrEmpty($jreName))
     {
-		Throw-Error "JRE path or name not specified"
+		Throw-Error "JRE Name not specified"
     }
 
-	if (!(Test-Path -Path $jrePath))
+	$javaHome = "C:\Program Files\Java\$jreName\bin"
+
+	if (!(Test-Path -Path $javaHome))
 	{
-		Throw-Error "Invalid JRE path: $jrePath"
+		Throw-Error "Invalid JAVA_HOME: $javaHome"
 	}
 
 	Trace-Log "Start JRE installation"
-
-    Expand-Archive -Force -Path $jrePath -DestinationPath .
-
-    [System.Environment]::SetEnvironmentVariable('PATH', "$env:Path;$PWD\$jreName\bin", [System.EnvironmentVariableTarget]::Machine)
-    [System.Environment]::SetEnvironmentVariable('JAVA_HOME', "$PWD\$jreName\bin", [System.EnvironmentVariableTarget]::Machine)
-
-    $env:Path += "$PWD\$jreName\bin"
-
-    echo $env:JAVA_HOME
-    echo $env:Path
-
-    java -version
-
-	Start-Sleep -Seconds 10
-
+    $env:Path += $javaHome
+	$env:JAVA_HOME = $javaHome
+	[System.Environment]::SetEnvironmentVariable('PATH', "$env:Path;$javaHome", [System.EnvironmentVariableTarget]::Machine)
+    [System.Environment]::SetEnvironmentVariable('JAVA_HOME', $javaHome, [System.EnvironmentVariableTarget]::Machine)
+    Trace-Log $env:JAVA_HOME
+    Trace-Log $env:Path
+	Trace-Log (java -version)
 	Trace-Log "Installation of JRE is successful"
 }
 
@@ -193,11 +184,13 @@ Install-MSI $gwPath
 Register-Gateway $gatewayKey
 
 Trace-Log "Java Runtime Environment"
-Trace-Log "JRE from: $jreURI"
-$jrePath= "$PWD\jre.zip"
+$jreUri = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=242990_a4634525489241b9a9e1aa73d9e118e6"
+Trace-Log "JRE download fw link: $jreUri"
+$jrePath= "$PWD\java_x64.exe"
 Trace-Log "JRE location: $jrePath"
 Download-File $jreURI $jrePath
-Install-JRE $jrePath $jreName
+Install-EXE $jrePath "/s"
+Install-JRE "jre1.8.0_261"
 
 Trace-Log "Visual C++ 2010 Redistributable"
 $vcUri = "https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-3DE650EFEBA5/vcredist_x64.exe"
