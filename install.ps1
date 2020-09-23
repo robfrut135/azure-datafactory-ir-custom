@@ -263,7 +263,7 @@ try
 }
 catch
 {
-	Trace-Log "Integration Runtime EMPTY."
+	Trace-Log "Integration Runtime with EMPTY content."
 }
 
 Trace-Log "END install.ps1"
