@@ -254,8 +254,9 @@ function Install-IR-Backup(){
 
 function Install-Modules(){
 	Trace-Log "Azure Cloud configure client"
-	Start-Job {Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append} | Wait-Job
-	Start-Job {Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append} | Wait-Job
+	Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append
+	Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append
+	Start-Sleep -Seconds 360
 	Trace-Log "Azure Cloud configure client is successful"
 }
 
