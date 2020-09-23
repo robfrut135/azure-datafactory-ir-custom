@@ -9,7 +9,7 @@ param(
 	$datafactoryName
 )
 
-# Init log setting
+######################################## LOG SETTING ##############################################################
 $logLoc = "$env:SystemDrive\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\"
 if (! (Test-Path($logLoc)))
 {
@@ -17,7 +17,7 @@ if (! (Test-Path($logLoc)))
 }
 $logPath = "$logLoc\tracelog.log"
 
-# Functions
+###################################### BASE FUNCTIONS #############################################################
 function Now-Value()
 {
     return (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
@@ -152,7 +152,7 @@ function Register-Gateway([string] $instanceKey)
     Trace-Log "Integration Runtime Agent registration is successful!"
 }
 
-function Install-JRE([string] $jreName)
+function Configure-JRE([string] $jreName)
 {
 	if ([string]::IsNullOrEmpty($jreName))
     {
@@ -177,93 +177,119 @@ function Install-JRE([string] $jreName)
 	Trace-Log "Installation of JRE is successful"
 }
 
-# Main
+###################################### MAIN FUNCTIONS #############################################################
+function Install-IR(){
+	Trace-Log "Data Factory Integration Runtime Agent"
+	$irUri = "https://go.microsoft.com/fwlink/?linkid=839822"
+	Trace-Log "Gateway download fw link: $irUri"
+	$gwPath= "$PWD\gateway.msi"
+	Trace-Log "Gateway download location: $gwPath"
+	Download-File $irUri $gwPath
+	Install-MSI $gwPath
+	Register-Gateway $gatewayKey
+}
+
+function Install-JRE(){
+	Trace-Log "Java Runtime Environment"
+	$jreUri = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=242990_a4634525489241b9a9e1aa73d9e118e6"
+	Trace-Log "JRE download fw link: $jreUri"
+	$jrePath= "$PWD\java_x64.exe"
+	Trace-Log "JRE location: $jrePath"
+	Download-File $jreURI $jrePath
+	Install-EXE $jrePath "/s"
+	Configure-JRE "jre1.8.0_261"
+}
+
+function Install-VisuaCPackage(){
+	Trace-Log "Visual C++ 2010 Redistributable"
+	$vcUri = "https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-3DE650EFEBA5/vcredist_x64.exe"
+	Trace-Log "Package from: $vcUri"
+	$vcPath= "$PWD\vcredist_x64.exe"
+	Trace-Log "Package location: $vcPath"
+	Download-File $vcUri $vcPath
+	Install-EXE $vcPath "-q"
+}
+
+function Install-SAP-ODBC-Driver(){
+	Trace-Log "SAP HANA ODBC Driver"
+	$imdbClientVersion = "$PWD\drivers\odbc\sap\*.SAR"
+	$sapCarVersion = "$PWD\drivers\odbc\sap\*.EXE"
+	$imdbClient = "$PWD\drivers\odbc\sap\IMDB_CLIENT.SAR"
+	$sapCar = "$PWD\drivers\odbc\sap\SAPCAR.EXE"
+	$sapDriverPath = "$PWD\SAP_HANA_CLIENT\hdbinst.exe"
+	if (!(Test-Path -Path $imdbClientVersion) -or !(Test-Path -Path $sapCarVersion))
+	{
+		Throw-Error "Invalid SAP HANA Drivers, not found drivers"
+	}
+	mv $imdbVersion $imdbClient
+	mv $sapCarVersion $sapCar
+	Run-Process $sapCar "-xvf $imdbClient"
+	Install-EXE $sapDriverPath "-H $env:COMPUTERNAME --odbc_driver_name SAP_HANA_ODBC --skip_vcredist --batch"
+}
+
+function Install-IR-Backup(){
+	$backupJobName = "IntegrationRuntimeBackup"
+	try
+	{
+		Trace-Log "Backup task remove"
+		Get-ScheduledJob $backupJobName | Unregister-ScheduledJob -Force | Out-File $logPath -Append
+		Trace-Log "Backup task remove is successful"
+	}
+	catch
+	{
+		Trace-Log "Backup task not exists"
+	}
+	Trace-Log "Backup task registration"
+	$T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
+	$O = @{
+	  WakeToRun=$true
+	  StartIfNotIdle=$false
+	  MultipleInstancePolicy="Queue"
+	}
+	Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
+	Trace-Log "Backup task registration is successful"
+}
+
+function Install-Modules(){
+	Trace-Log "Azure Cloud configure client"
+	Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append
+	Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append
+	Trace-Log "Azure Cloud configure client is successful"
+}
+
+function Load-IR-Backup(){
+	try
+	{
+		Trace-Log "Set Azure identity"
+		Add-AzAccount -identity | Out-File $logPath -Append
+		Connect-AzAccount -Identity | Out-File $logPath -Append
+		Trace-Log "Set Azure identity is successful"
+
+		Trace-Log "Download backup file from Storage"
+		$backupStorage = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $stogageAccountName
+		$ctx = $backupStorage.Context
+		Get-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -Destination "$PWD\datafactory_ir_backup" -Force | Out-File $logPath -Append
+		Trace-Log "Download backup file is successful"
+
+		Trace-Log "Load backup file to Integration Runtime"
+		$irCmd = "C:\Program Files\Microsoft Integration Runtime\4.0\Shared\dmgcmd.exe"
+		Run-Process $irCmd "-ImportBackupFile $PWD\datafactory_ir_backup datafactory_ir_backup"
+		Trace-Log "Load backup file to Integration Runtime is successful"
+	}
+	catch
+	{
+		Trace-Log "Integration Runtime with EMPTY content."
+	}
+}
+
+########################################## MAIN ###################################################################
 Trace-Log "START install.ps1"
 Trace-Log "Log file: $logLoc"
-
-### DataFactory Integration Runtime
-Trace-Log "Data Factory Integration Runtime Agent"
-$irUri = "https://go.microsoft.com/fwlink/?linkid=839822"
-Trace-Log "Gateway download fw link: $irUri"
-$gwPath= "$PWD\gateway.msi"
-Trace-Log "Gateway download location: $gwPath"
-Download-File $irUri $gwPath
-Install-MSI $gwPath
-Register-Gateway $gatewayKey
-
-### JRE
-Trace-Log "Java Runtime Environment"
-$jreUri = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=242990_a4634525489241b9a9e1aa73d9e118e6"
-Trace-Log "JRE download fw link: $jreUri"
-$jrePath= "$PWD\java_x64.exe"
-Trace-Log "JRE location: $jrePath"
-Download-File $jreURI $jrePath
-Install-EXE $jrePath "/s"
-Install-JRE "jre1.8.0_261"
-
-### Visual C++
-Trace-Log "Visual C++ 2010 Redistributable"
-$vcUri = "https://download.microsoft.com/download/3/2/2/3224B87F-CFA0-4E70-BDA3-3DE650EFEBA5/vcredist_x64.exe"
-Trace-Log "Package from: $vcUri"
-$vcPath= "$PWD\vcredist_x64.exe"
-Trace-Log "Package location: $vcPath"
-Download-File $vcUri $vcPath
-Install-EXE $vcPath "-q"
-
-### SAP Driver
-Trace-Log "SAP HANA ODBC Driver"
-Trace-Log "TODO"
-
-### Backup schedule
-$backupJobName = "IntegrationRuntimeBackup"
-try
-{
-	Trace-Log "Backup task remove"
-	Get-ScheduledJob $backupJobName | Unregister-ScheduledJob -Force  | Out-File $logPath -Append
-	Trace-Log "Backup task remove is successful"
-}
-catch
-{
-	Trace-Log "Backup task not exists"
-}
-Trace-Log "Backup task registration"
-$T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
-$O = @{
-  WakeToRun=$true
-  StartIfNotIdle=$false
-  MultipleInstancePolicy="Queue"
-}
-Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
-Trace-Log "Backup task registration is successful"
-
-### Azure Client
-Trace-Log "Azure Cloud configure client"
-Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append
-Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append
-Trace-Log "Azure Cloud configure client is successful"
-
-### Load backup inside Integration Runtime
-try
-{
-	Trace-Log "Set Azure identity"
-	Add-AzAccount -identity | Out-File $logPath -Append
-	Connect-AzAccount -Identity | Out-File $logPath -Append
-	Trace-Log "Set Azure identity is successful"
-
-	Trace-Log "Download backup file from Storage"
-	$backupStorage = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $stogageAccountName
-	$ctx = $backupStorage.Context
-	Get-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -Destination "$PWD\datafactory_ir_backup" -Force | Out-File $logPath -Append
-	Trace-Log "Download backup file is successful"
-
-	Trace-Log "Load backup file to Integration Runtime"
-	$irCmd = "C:\Program Files\Microsoft Integration Runtime\4.0\Shared\dmgcmd.exe"
-	Run-Process $irCmd "-ImportBackupFile $PWD\datafactory_ir_backup datafactory_ir_backup"
-	Trace-Log "Load backup file to Integration Runtime is successful"
-}
-catch
-{
-	Trace-Log "Integration Runtime with EMPTY content."
-}
-
+Install-IR
+Install-JRE
+Install-VisuaCPackage
+Install-SAP-ODBC-Driver
+Install-IR-Backup
+Install-Modules
+Load-IR-Backup
 Trace-Log "END install.ps1"
