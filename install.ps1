@@ -215,6 +215,18 @@ Trace-Log "SAP HANA ODBC Driver"
 Trace-Log "TODO"
 
 ### Backup schedule
+$backupJobName = "IntegrationRuntimeBackup"
+try
+{
+	Trace-Log "Backup task remove"
+	Get-ScheduledJob $backupJobName | Unregister-ScheduledJob -Force  | Out-File $logPath -Append
+	Trace-Log "Backup task remove is successful"
+}
+catch
+{
+	Trace-Log "Backup task not exists"
+}
+
 Trace-Log "Backup task registration"
 $T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
 $O = @{
@@ -222,27 +234,27 @@ $O = @{
   StartIfNotIdle=$false
   MultipleInstancePolicy="Queue"
 }
-Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name "IntegrationRuntimeBackup" -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName)
+Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
 Trace-Log "Backup task registration is successful"
 
 ### Azure Client
 Trace-Log "Azure Cloud configure client"
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force
+Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append
+Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append
 Trace-Log "Azure Cloud configure client is successful"
 
 ### Load backup inside Integration Runtime
 try
 {
 	Trace-Log "Set Azure identity"
-	Add-AzAccount -identity
-	Connect-AzAccount -Identity
+	Add-AzAccount -identity | Out-File $logPath -Append
+	Connect-AzAccount -Identity | Out-File $logPath -Append
 	Trace-Log "Set Azure identity is successful"
 
 	Trace-Log "Download backup file from Storage"
 	$backupStorage = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $stogageAccountName
 	$ctx = $backupStorage.Context
-	Get-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -Destination "$PWD\datafactory_ir_backup" -Force
+	Get-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -Destination "$PWD\datafactory_ir_backup" -Force | Out-File $logPath -Append
 	Trace-Log "Download backup file is successful"
 
 	Trace-Log "Load backup file to Integration Runtime"

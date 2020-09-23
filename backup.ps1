@@ -102,11 +102,11 @@ Trace-Log "Generate backup file is successful"
 
 ### Upload backup file to Storage
 Trace-Log "Upload backup file to Storage"
-Add-AzAccount -identity
-Connect-AzAccount -Identity
+Add-AzAccount -identity | Out-File $logPath -Append
+Connect-AzAccount -Identity | Out-File $logPath -Append
 $backupStorage = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $stogageAccountName
 $ctx = $backupStorage.Context
-Set-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -File "$PWD\datafactory_ir_backup" -Force
+Set-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -File "$PWD\datafactory_ir_backup" -Force | Out-File $logPath -Append
 Trace-Log "Upload backup file is successful"
 
 Trace-Log "END backup.ps1"
