@@ -1,7 +1,11 @@
-# Azure Cloud variables
-$resourceGroup = $env:RESOURCE_GROUP
-$stogageAccountName = $env:STORAGE_ACCOUNT
-$datafactoryName = $env:DATAFACTORY_NAME
+param(
+	[string]
+ 	$resourceGroup,
+	[string]
+ 	$stogageAccountName,
+	[string]
+	$datafactoryName
+)
 
 # Init log setting
 $logLoc = "$env:SystemDrive\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\"

@@ -214,13 +214,6 @@ Install-EXE $vcPath "-q"
 Trace-Log "SAP HANA ODBC Driver"
 Trace-Log "TODO"
 
-### Azure Cloud config
-Trace-Log "Set Azure Cloud config in environment"
-[System.Environment]::SetEnvironmentVariable('RESOURCE_GROUP', $resourceGroup, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('STORAGE_ACCOUNT', $stogageAccountName, [System.EnvironmentVariableTarget]::Machine)
-[System.Environment]::SetEnvironmentVariable('DATAFACTORY_NAME', $datafactoryName, [System.EnvironmentVariableTarget]::Machine)
-Trace-Log "Set Azure Cloud config in environment is successful"
-
 ### Backup schedule
 Trace-Log "Backup task registration"
 $T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
@@ -229,7 +222,7 @@ $O = @{
   StartIfNotIdle=$false
   MultipleInstancePolicy="Queue"
 }
-Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name "IntegrationRuntimeBackup" -FilePath "$PWD\backup.ps1"
+Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name "IntegrationRuntimeBackup" -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName)
 Trace-Log "Backup task registration is successful"
 
 ### Azure Client
