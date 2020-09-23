@@ -221,8 +221,10 @@ function Install-SAP-ODBC-Driver(){
 	{
 		Throw-Error "Invalid SAP HANA Drivers, not found drivers"
 	}
-	mv $imdbVersion $imdbClient
+	Trace-Log "Move driver versions to generic"
+	mv $imdbClientVersion $imdbClient
 	mv $sapCarVersion $sapCar
+	Trace-Log "Extrac SAP HANA Driver files"
 	Run-Process $sapCar "-xvf $imdbClient"
 	Install-EXE $sapDriverPath "-H $env:COMPUTERNAME --odbc_driver_name SAP_HANA_ODBC --skip_vcredist --batch"
 }
