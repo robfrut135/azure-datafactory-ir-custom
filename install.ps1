@@ -226,7 +226,6 @@ catch
 {
 	Trace-Log "Backup task not exists"
 }
-
 Trace-Log "Backup task registration"
 $T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
 $O = @{
