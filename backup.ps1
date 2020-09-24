@@ -91,21 +91,39 @@ function Run-Process([string] $process, [string] $arguments)
 
 ###################################### MAIN FUNCTIONS #############################################################
 function Backup-Generate(){
-	Trace-Log "Backup Integration Runtime Agent"
-	Trace-Log "Generate backup file"
-	$irCmd = "C:\Program Files\Microsoft Integration Runtime\4.0\Shared\dmgcmd.exe"
-	Run-Process $irCmd "-GenerateBackupFile $PWD\datafactory_ir_backup datafactory_ir_backup"
-	Trace-Log "Generate backup file is successful"
+	try
+	{
+		Trace-Log "Backup Integration Runtime Agent"
+		Trace-Log "Generate backup file"
+		$irCmd = "C:\Program Files\Microsoft Integration Runtime\4.0\Shared\dmgcmd.exe"
+		Run-Process $irCmd "-GenerateBackupFile $PWD\datafactory_ir_backup datafactory_ir_backup"
+		Trace-Log "Generate backup file is successful"
+	}
+	catch
+	{
+		Trace-Log "Backup-Restore has FAILED."
+		Trace-Log $_.Exception
+        Trace-Log $_.ScriptStackTrace
+	}
 }
 
 function Backup-Restore(){
-	Trace-Log "Upload backup file to Storage"
-	Add-AzAccount -identity | Out-File $logPath -Append
-	Connect-AzAccount -Identity | Out-File $logPath -Append
-	$backupStorage = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $stogageAccountName
-	$ctx = $backupStorage.Context
-	Set-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -File "$PWD\datafactory_ir_backup" -Force | Out-File $logPath -Append
-	Trace-Log "Upload backup file is successful"
+	try
+	{
+		Trace-Log "Upload backup file to Storage"
+		Add-AzAccount -identity | Out-File $logPath -Append
+		Connect-AzAccount -Identity | Out-File $logPath -Append
+		$backupStorage = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $stogageAccountName
+		$ctx = $backupStorage.Context
+		Set-AzStorageBlobContent -Context $ctx -Container "backup" -Blob "datafactory/ir/$datafactoryName" -File "$PWD\datafactory_ir_backup" -Force | Out-File $logPath -Append
+		Trace-Log "Upload backup file is successful"
+	}
+	catch
+	{
+		Trace-Log "Backup-Restore has FAILED."
+		Trace-Log $_.Exception
+        Trace-Log $_.ScriptStackTrace
+	}
 }
 
 ########################################## MAIN ###################################################################
