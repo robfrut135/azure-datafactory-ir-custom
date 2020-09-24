@@ -254,9 +254,13 @@ function Install-IR-Backup(){
 
 function Install-Modules(){
 	Trace-Log "Azure Cloud configure client"
+	Trace-Log "Install NuGet package provider"
 	Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append
+	Trace-Log "Install module Az"
 	Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append
 	Start-Sleep -Seconds 360
+	Trace-Log "Import module Az"
+	Import-Module -Name Az -Force | Out-File $logPath -Append
 	Trace-Log "Azure Cloud configure client is successful"
 }
 
