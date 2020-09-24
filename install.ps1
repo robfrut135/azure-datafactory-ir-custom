@@ -239,6 +239,7 @@ function Install-Modules(){
 	Install-MSI $azPath
 	Trace-Log "Import module Az"
 	Import-Module -Name Az -Force | Out-File $logPath -Append
+	Start-Sleep -Seconds 60
 	Trace-Log "Azure Cloud configure client is successful"
 }
 
