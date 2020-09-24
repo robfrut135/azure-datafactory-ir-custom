@@ -103,7 +103,7 @@ function Download-File([string] $url, [string] $path)
     catch
     {
         Trace-Log "Fail to download file"
-        Trace-Log $_.Exception.ToString()
+        Trace-Log $_.Exception
         throw
     }
 }
@@ -286,6 +286,9 @@ function Load-IR-Backup(){
 	catch
 	{
 		Trace-Log "Integration Runtime with EMPTY content."
+		Trace-Log $_.Exception
+        Trace-Log $_.ErrorDetails
+        Trace-Log $_.ScriptStackTrace
 	}
 }
 
