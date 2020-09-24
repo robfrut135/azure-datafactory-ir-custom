@@ -299,7 +299,7 @@ Install-IR
 Install-JRE
 Install-VisuaCPackage
 Install-SAP-ODBC-Driver
-Install-IR-Backup
 Install-Modules
+Install-IR-Backup
 Load-IR-Backup
 Trace-Log "END install.ps1"
