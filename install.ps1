@@ -287,7 +287,6 @@ function Load-IR-Backup(){
 	{
 		Trace-Log "Integration Runtime with EMPTY content."
 		Trace-Log $_.Exception
-        Trace-Log $_.ErrorDetails
         Trace-Log $_.ScriptStackTrace
 	}
 }
