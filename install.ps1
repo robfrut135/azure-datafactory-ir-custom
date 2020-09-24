@@ -229,6 +229,19 @@ function Install-SAP-ODBC-Driver(){
 	Install-EXE $sapDriverPath "-H $env:COMPUTERNAME --odbc_driver_name SAP_HANA_ODBC --skip_vcredist --batch"
 }
 
+function Install-Modules(){
+	Trace-Log "Azure Cloud configure client"
+	$azUri = "https://github.com/Azure/azure-powershell/releases/download/v4.7.0-September2020/Az-Cmdlets-4.7.0.33468-x86.msi"
+	Trace-Log "Azure PowerShell download fw link: $azUri"
+	$azPath= "$PWD\AzCmdlets.msi"
+	Trace-Log "Azure PowerShell download location: $azPath"
+	Download-File $azUri $azPath
+	Install-MSI $azPath
+	Trace-Log "Import module Az"
+	Import-Module -Name Az -Force | Out-File $logPath -Append
+	Trace-Log "Azure Cloud configure client is successful"
+}
+
 function Install-IR-Backup(){
 	$backupJobName = "IntegrationRuntimeBackup"
 	try
@@ -250,18 +263,6 @@ function Install-IR-Backup(){
 	}
 	Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
 	Trace-Log "Backup task registration is successful"
-}
-
-function Install-Modules(){
-	Trace-Log "Azure Cloud configure client"
-	Trace-Log "Install NuGet package provider"
-	Install-PackageProvider -Name NuGet -MinimumVersion "2.8.5.201" -Force | Out-File $logPath -Append
-	Trace-Log "Install module Az"
-	Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force | Out-File $logPath -Append
-	Start-Sleep -Seconds 360
-	Trace-Log "Import module Az"
-	Import-Module -Name Az -Force | Out-File $logPath -Append
-	Trace-Log "Azure Cloud configure client is successful"
 }
 
 function Load-IR-Backup(){
