@@ -230,7 +230,7 @@ function Install-SAP-ODBC-Driver(){
 }
 
 function Install-Modules(){
-	Trace-Log "Azure Cloud configure client"
+	Trace-Log "Install PowerShell modules"
 	$azUri = "https://github.com/Azure/azure-powershell/releases/download/v4.7.0-September2020/Az-Cmdlets-4.7.0.33468-x86.msi"
 	Trace-Log "Azure PowerShell download fw link: $azUri"
 	$azPath= "$PWD\AzCmdlets.msi"
@@ -240,7 +240,7 @@ function Install-Modules(){
 	Trace-Log "Import module Az"
 	Import-Module -Name Az -Force
 	Start-Sleep -Seconds 60
-	Trace-Log "Azure Cloud configure client is successful"
+	Trace-Log "Install PowerShell modules is successful"
 }
 
 function Install-IR-Backup(){
