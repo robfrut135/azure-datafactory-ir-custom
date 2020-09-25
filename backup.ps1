@@ -93,7 +93,6 @@ function Run-Process([string] $process, [string] $arguments)
 function Backup-Generate(){
 	try
 	{
-		Trace-Log "Backup Integration Runtime Agent"
 		Trace-Log "Generate backup file"
 		$irCmd = "C:\Program Files\Microsoft Integration Runtime\4.0\Shared\dmgcmd.exe"
 		Run-Process $irCmd "-GenerateBackupFile $PWD\datafactory_ir_backup datafactory_ir_backup"
@@ -101,13 +100,13 @@ function Backup-Generate(){
 	}
 	catch
 	{
-		Trace-Log "Backup-Restore has FAILED."
+		Trace-Log "Backup-Generate has FAILED."
 		Trace-Log $_.Exception
         Trace-Log $_.ScriptStackTrace
 	}
 }
 
-function Backup-Restore(){
+function Backup-Upload(){
 	try
 	{
 		Trace-Log "Upload backup file to Storage"
@@ -120,7 +119,7 @@ function Backup-Restore(){
 	}
 	catch
 	{
-		Trace-Log "Backup-Restore has FAILED."
+		Trace-Log "Backup-Upload has FAILED."
 		Trace-Log $_.Exception
         Trace-Log $_.ScriptStackTrace
 	}
@@ -130,5 +129,5 @@ function Backup-Restore(){
 Trace-Log "START backup.ps1"
 Trace-Log "Log file: $logLoc"
 Backup-Generate
-Backup-Restore
+Backup-Upload
 Trace-Log "END backup.ps1"
