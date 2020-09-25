@@ -248,7 +248,7 @@ function Install-IR-Backup(){
 	try
 	{
 		Trace-Log "Backup task remove"
-		Get-ScheduledJob $backupJobName | Unregister-ScheduledJob -Force | Out-File $logPath -Append
+		Get-ScheduledJob $backupJobName | Unregister-ScheduledJob -Force
 		Trace-Log "Backup task remove is successful"
 	}
 	catch
@@ -262,7 +262,7 @@ function Install-IR-Backup(){
 	  StartIfNotIdle=$false
 	  MultipleInstancePolicy="Queue"
 	}
-	Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
+	Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName)
 	Trace-Log "Backup task registration is successful"
 }
 
