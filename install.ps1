@@ -244,24 +244,21 @@ function Install-Modules(){
 
 function Install-IR-Backup(){
 	$backupJobName = "IntegrationRuntimeBackup"
-	try
+	$scheduledTask = Get-ScheduledTask -TaskName $backupJobName -ErrorAction SilentlyContinue
+	if ($scheduledTask)
 	{
 		Trace-Log "Backup task remove"
-		Get-ScheduledJob $backupJobName | Unregister-ScheduledJob -Force
+		Unregister-ScheduledJob -Name $backupJobName -Force | Out-File $logPath -Append
 		Trace-Log "Backup task remove is successful"
 	}
-	catch
+	else
 	{
 		Trace-Log "Backup task not exists"
 	}
 	Trace-Log "Backup task registration"
 	$T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
-	$O = @{
-	  WakeToRun=$true
-	  StartIfNotIdle=$false
-	  MultipleInstancePolicy="Queue"
-	}
-	Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName)
+	$O = New-ScheduledJobOption -WakeToRun -StartIfIdle -MultipleInstancePolicy "Queue"
+	Register-ScheduledJob -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
 	Trace-Log "Backup task registration is successful"
 }
 
