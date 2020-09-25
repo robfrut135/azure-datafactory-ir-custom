@@ -168,8 +168,8 @@ function Configure-JRE([string] $jreName)
 	$env:JAVA_HOME = $javaHome
 	[System.Environment]::SetEnvironmentVariable('PATH', "$env:Path;$javaHome", [System.EnvironmentVariableTarget]::Machine)
     [System.Environment]::SetEnvironmentVariable('JAVA_HOME', $javaHome, [System.EnvironmentVariableTarget]::Machine)
-    Trace-Log $env:JAVA_HOME
-    Trace-Log $env:Path
+    Trace-Log "JAVA_HOME=$env:JAVA_HOME"
+    Trace-Log "PATH=$env:Path"
 	Trace-Log "Installation of JRE is successful"
 }
 
