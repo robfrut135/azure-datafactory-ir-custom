@@ -158,14 +158,11 @@ function Configure-JRE([string] $jreName)
     {
 		Throw-Error "JRE Name not specified"
     }
-
 	$javaHome = "C:\Program Files\Java\$jreName\bin"
-
 	if (!(Test-Path -Path $javaHome))
 	{
 		Throw-Error "Invalid JAVA_HOME: $javaHome"
 	}
-
 	Trace-Log "Start JRE installation"
     $env:Path += $javaHome
 	$env:JAVA_HOME = $javaHome
@@ -173,7 +170,6 @@ function Configure-JRE([string] $jreName)
     [System.Environment]::SetEnvironmentVariable('JAVA_HOME', $javaHome, [System.EnvironmentVariableTarget]::Machine)
     Trace-Log $env:JAVA_HOME
     Trace-Log $env:Path
-	Trace-Log (java -version)
 	Trace-Log "Installation of JRE is successful"
 }
 
