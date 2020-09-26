@@ -249,10 +249,10 @@ function Install-IR-Backup(){
 	{
 		Trace-Log "Backup task not exists"
 	}
-	Trace-Log "Generate credentials"
+	Trace-Log "Get credentials from default user"
 	$pwdSecureString = ConvertTo-SecureString -Force -AsPlainText $loginPassword
 	$credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList @($loginUsername, $pwdSecureString)
-	Trace-Log "Generate credentials is successful"
+	Trace-Log "Get credentials from default is successful"
 	Trace-Log "Backup task registration"
 	$T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
 	$O = New-ScheduledJobOption -WakeToRun -StartIfIdle -MultipleInstancePolicy "Queue"
