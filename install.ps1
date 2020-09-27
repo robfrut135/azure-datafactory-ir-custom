@@ -256,7 +256,7 @@ function Install-IR-Backup(){
 	Trace-Log "Backup task registration"
 	$T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
 	$O = New-ScheduledJobOption -WakeToRun -StartIfIdle -MultipleInstancePolicy "Queue"
-	Register-ScheduledJob -Credential $credential -Authentication "CredSSP" -Trigger $T -ScheduledJobOption $O -Name $backupJobName -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) | Out-File $logPath -Append
+	Register-ScheduledJob -Name $backupJobName -Credential $credential -Authentication "CredSSP" -Trigger $T -ScheduledJobOption $O -InitializationScript "$PWD" -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) -MaxResultCount 20 | Out-File $logPath -Append
 	Trace-Log "Backup task registration is successful"
 }
 
