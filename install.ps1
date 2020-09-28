@@ -254,7 +254,7 @@ function Install-IR-Backup(){
 	$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -WorkingDirectory "$PWD" -Argument "-nologo -noninteractive -noprofile -ExecutionPolicy Unrestricted -File .\backup.ps1 $resourceGroup $stogageAccountName $datafactoryName"
 	$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10)
 	$settings = New-ScheduledTaskSettingsSet -Priority 1 -MultipleInstances "Queue" -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -WakeToRun
-	Register-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -Action $action -Trigger $trigger -Settings $settings -RunLevel "Highest" -User $loginUsername -Password $loginPassword -Force
+	Register-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -Action $action -Trigger $trigger -Settings $settings -RunLevel "Highest" -User "$env:COMPUTERNAME\$loginUsername" -Password $loginPassword -Force
 	Trace-Log "Backup task registration is successful"
 }
 
