@@ -242,20 +242,20 @@ function Install-IR-Backup(){
 	$scheduledTask = Get-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -ErrorAction SilentlyContinue
 	if ($scheduledTask)
 	{
-		Trace-Log "Backup task remove"
-		Unregister-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -Force | Out-File $logPath -Append
-		Trace-Log "Backup task remove is successful"
+		Trace-Log "$backupTaskName task remove"
+		Unregister-ScheduledTask -TaskName $backupTaskName -Confirm:$false | Out-File $logPath -Append
+		Trace-Log "$backupTaskName task remove is successful"
 	}
 	else
 	{
-		Trace-Log "Backup task not exists"
+		Trace-Log "$backupTaskName task not exists"
 	}
-	Trace-Log "Backup task registration"
+	Trace-Log "$backupTaskName task registration"
 	$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -WorkingDirectory "$PWD" -Argument "-nologo -noninteractive -noprofile -ExecutionPolicy Unrestricted -File .\backup.ps1 $resourceGroup $stogageAccountName $datafactoryName"
 	$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10)
 	$settings = New-ScheduledTaskSettingsSet -Priority 1 -MultipleInstances "Queue" -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -WakeToRun
 	Register-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -Action $action -Trigger $trigger -Settings $settings -RunLevel "Highest" -User "$env:COMPUTERNAME\$loginUsername" -Password $loginPassword -Force
-	Trace-Log "Backup task registration is successful"
+	Trace-Log "$backupTaskName task registration is successful"
 }
 
 function Load-IR-Backup(){
