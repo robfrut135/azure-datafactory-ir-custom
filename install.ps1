@@ -237,26 +237,24 @@ function Install-Modules(){
 }
 
 function Install-IR-Backup(){
-	$backupJobName = "IntegrationRuntimeBackup"
-	$scheduledTask = Get-ScheduledTask -TaskName $backupJobName -ErrorAction SilentlyContinue
+	$backupTaskPath = "\Azure\DataFactory"
+	$backupTaskName = "IntegrationRuntimeBackup"
+	$scheduledTask = Get-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -ErrorAction SilentlyContinue
 	if ($scheduledTask)
 	{
 		Trace-Log "Backup task remove"
-		Unregister-ScheduledJob -Name $backupJobName -Force | Out-File $logPath -Append
+		Unregister-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -Force | Out-File $logPath -Append
 		Trace-Log "Backup task remove is successful"
 	}
 	else
 	{
 		Trace-Log "Backup task not exists"
 	}
-	Trace-Log "Get credentials from default user"
-	$pwdSecureString = ConvertTo-SecureString -Force -AsPlainText $loginPassword
-	$credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList @($loginUsername, $pwdSecureString)
-	Trace-Log "Get credentials from default is successful"
 	Trace-Log "Backup task registration"
-	$T = New-JobTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration ([TimeSpan]::MaxValue)
-	$O = New-ScheduledJobOption -RunElevated -WakeToRun -StartIfIdle -MultipleInstancePolicy "Queue"
-	Register-ScheduledJob -Name $backupJobName -Credential $credential -Authentication "CredSSP" -Trigger $T -ScheduledJobOption $O -FilePath "$PWD\backup.ps1" -ArgumentList @($resourceGroup,$stogageAccountName,$datafactoryName) -MaxResultCount 20 | Out-File $logPath -Append
+	$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -WorkingDirectory "$PWD" -Argument "-nologo -noninteractive -noprofile -ExecutionPolicy Unrestricted -File .\backup.ps1 $resourceGroup $stogageAccountName $datafactoryName"
+	$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 10)
+	$settings = New-ScheduledTaskSettingsSet -Priority 1 -MultipleInstances "Queue" -ExecutionTimeLimit (New-TimeSpan -Minutes 10) -WakeToRun
+	Register-ScheduledTask -TaskName $backupTaskName -TaskPath $backupTaskPath -Action $action -Trigger $trigger -Settings $settings -RunLevel "Highest" -User $loginUsername -Password $loginPassword -Force
 	Trace-Log "Backup task registration is successful"
 }
 
